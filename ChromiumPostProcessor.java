@@ -26,7 +26,7 @@ public class ChromiumPostProcessor {
         }
         
         String arr[]=log.split("\n");
-        for(int i=0;i<arr.length-1;i++){
+        for(int i=0;i<arr.length-2;i++){
             if(arr[i].contains("Loading")){
                 double time=processLine(arr[i], arr[i+1]);
                 log("Load Time: "+time+"ms");
