@@ -9,8 +9,10 @@ public class ChromiumPostProcessor {
     static int stallThreshold=60; // in milliseconds
     static int linkSpeed=10000; //in kbps
     
+    //These variables are NOT user editable
     static BufferedWriter wt;
     static double sum=0;
+    static int frame_count=0;
     
 
     public static void main(String args[]) {
@@ -27,25 +29,13 @@ public class ChromiumPostProcessor {
         }
         
         String arr[]=log.split("\n");
+        
         for(int i=0;i<arr.length-2;i++){
-            if(arr[i].contains("Loading")){
-                double time=processLine(arr[i], arr[i+1]);
-                log("Load Time: "+time+"ms");
-            }
-            
-            else{
-                double time=processLine(arr[i], arr[i+1]);
-                sum=sum+time;
-                if(time>stallThreshold){
-                    log("Detected Stall of "+time+"ms between Frame "+i+" and Frame "+(i+1));
-                }
-                else if(time<20){
-                    log("Error: Detect quicken of "+time+" between Frame "+i+" and Frame "+(i+1));
-                }
-            }
+            processLine(arr[i], arr[i+1]);       
         }
+        
         double avg=sum/arr.length;
-        log("Average Frame Delay: "+avg);
+        log("Average delay between frames: "+avg);
         
         wt.close();
         }
@@ -60,20 +50,45 @@ public class ChromiumPostProcessor {
         wt.flush();
     }
     
-    //Wondershaper doesn't work! We need to use something else to throttle bandwidth
-    public static void setLinkSpeed(int speed) throws Exception{
-        Runtime.getRuntime().exec("sudo wondershaper eth0 "+speed+" 10000");
-    }
-    
-    public static int processLine(String line1, String line2){
-        line1=line1.replaceAll("#FrameReady at ", "");
-        line1=line1.replace("#Loading at ", "");
-        line2=line2.replaceAll("#FrameReady at ", "");
-        line2=line2.replace("#Loading at ", "");
-        double d1=Double.parseDouble(line1);
-        double d2=Double.parseDouble(line2);
-        double time=d2-d1;
-        int ret=(int) time;
-        return ret;
+    public static void processLine(String line1, String line2) throws Exception{
+        if(line1.contains("#Loading at ") && line2.contains("#FrameReady at ")){
+            line1=line1.replace("#Loading at ", "");
+            double d1=Double.parseDouble(line1);
+            line2=line2.replace("#FrameReady at ", "");
+            double d2=Double.parseDouble(line2);
+            double t=d2-d1;
+            int time=(int) t;
+            log("Loading Time: "+time+"ms");
+        }
+        
+        else if(line1.contains("#FrameReady at ") && line2.contains("#FrameReady at ")){
+            frame_count++;
+            
+            line1=line1.replace("#FrameReady at ", "");
+            double d1=Double.parseDouble(line1);
+            line2=line2.replace("#FrameReady at ", "");
+            double d2=Double.parseDouble(line2);
+            double t=d2-d1;
+            int time=(int) t;
+            
+            sum=sum+time;
+            
+            if(time>stallThreshold){
+                log("Stall of "+time+"ms detected between Frame "+frame_count+" and Frame "+(frame_count+1));
+            }
+            else if(time<20){
+                log("Quicken of "+time+"ms detected between Frame "+frame_count+" and Frame "+(frame_count+1));
+            }
+        }
+        
+        else if(line1.contains("#Seek at ") && line2.contains("#FrameReady at ")){
+            line1=line1.replace("#Seek at ", "");
+            double d1=Double.parseDouble(line1);
+            line2=line2.replace("#FrameReady at ", "");
+            double d2=Double.parseDouble(line2);
+            double t=d2-d1;
+            int time=(int) t;
+            log("Seek time of "+time+"ms between Frame "+frame_count+" and Frame "+(frame_count+1));
+        }
     }
 }
