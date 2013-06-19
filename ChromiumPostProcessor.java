@@ -43,9 +43,9 @@ public class ChromiumPostProcessor {
                     log("Error: Detect quicken of "+time+" between Frame "+i+" and Frame "+(i+1));
                 }
             }
-            double avg=sum/arr.length;
-            log("Average Frame Delay: "+avg);
         }
+        double avg=sum/arr.length;
+        log("Average Frame Delay: "+avg);
         
         wt.close();
         }
