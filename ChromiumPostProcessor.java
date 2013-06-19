@@ -10,6 +10,7 @@ public class ChromiumPostProcessor {
     static int linkSpeed=10000; //in kbps
     
     static BufferedWriter wt;
+    static double sum=0;
     
 
     public static void main(String args[]) {
@@ -34,6 +35,7 @@ public class ChromiumPostProcessor {
             
             else{
                 double time=processLine(arr[i], arr[i+1]);
+                sum=sum+time;
                 if(time>stallThreshold){
                     log("Detected Stall of "+time+"ms between Frame "+i+" and Frame "+(i+1));
                 }
@@ -41,6 +43,8 @@ public class ChromiumPostProcessor {
                     log("Error: Detect quicken of "+time+" between Frame "+i+" and Frame "+(i+1));
                 }
             }
+            double avg=sum/arr.length;
+            log("Average Frame Delay: "+avg);
         }
         
         wt.close();
